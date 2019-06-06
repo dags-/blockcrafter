@@ -19,6 +19,7 @@ import os
 import io
 import glob
 import json
+import sys
 import zipfile
 import fnmatch
 import itertools
@@ -373,8 +374,7 @@ class Assets:
         elements = {}
 
         if "parent" in m:
-            prefix = path.split("/")[0]
-            parent = self._get_model_json(self.model_base.format(prefix=prefix) + "/" + m["parent"] + ".json")
+            parent = self._get_model_json(parse_model_path(m["parent"]))
             textures.update(parent["textures"])
             if "elements" in parent:
                 elements = parent["elements"]
@@ -411,7 +411,10 @@ class Assets:
         return models
 
     def load_texture(self, prefix, path):
-        return self.source.open_file(self.texture_base.format(prefix=prefix) + "/" + path, mode="rb")
+        return self.load_texture_path(self.texture_base.format(prefix=prefix) + "/" + path)
+
+    def load_texture_path(self, path):
+        return self.source.open_file(path, mode="rb")
 
 class Blockstate:
     def __init__(self, assets, prefix, name, data, properties={}):
@@ -474,7 +477,7 @@ class Blockstate:
             model_name = modelref["model"]
             model_transformation = dict(modelref)
             del model_transformation["model"]
-            model = self.assets.get_model(self.prefix + "/models/" + model_name + ".json")
+            model = self.assets.get_model(parse_model_path(model_name))
             evaluated.append((model, model_transformation))
         return evaluated
 
@@ -561,7 +564,7 @@ class Model:
         return self.resolve_texture(self.textures[name])
 
     def load_texture(self, name):
-        return self.assets.load_texture(self.prefix, name + ".png")
+        return self.assets.load_texture_path(parse_texture_path(name))
 
     def __repr__(self):
         return "<Model name=%s>" % self.name
@@ -577,6 +580,21 @@ class Model:
 #    if not name in texturesdef:
 #        return None
 #    return resolve_texture(texturesdef, texturesdef[name])
+
+
+def parse_model_path(path):
+    location = path.split(":")
+    if len(location) == 1:
+        return "minecraft/models/" + path + ".json"
+    return location[0] + "/models/" + location[1] + ".json"
+
+
+def parse_texture_path(path):
+    location = path.split(":")
+    if len(location) == 1:
+        return "minecraft/textures/" + path + ".png"
+    return location[0] + "/textures/" + location[1] + ".png"
+
 
 def parse_variant(condition):
     if condition == "":
