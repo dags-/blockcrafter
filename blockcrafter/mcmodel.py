@@ -410,10 +410,10 @@ class Assets:
             models.append(self.get_model(path))
         return models
 
-    def load_texture(self, prefix, path):
-        return self.load_texture_path(self.texture_base.format(prefix=prefix) + "/" + path)
+    def get_texture_path(self, prefix, path):
+        return self.texture_base.format(prefix=prefix) + "/" + path
 
-    def load_texture_path(self, path):
+    def load_texture(self, path):
         return self.source.open_file(path, mode="rb")
 
 class Blockstate:
@@ -434,7 +434,8 @@ class Blockstate:
                     flipped = True
                     colormap = colormap.replace("_flipped", "")
 
-                image = Image.open(self.assets.load_texture(self.prefix, "colormap/" + colormap + ".png"))
+                path = self.assets.texture_base.format(prefix=self.prefix) + "/colormap/" + colormap + ".png"
+                image = Image.open(self.assets.load_texture(path))
                 image = image.convert("RGBA")
                 colors = util.extract_colormap_colors(image)
                 return util.encode_colormap_colors(colors)
@@ -564,7 +565,7 @@ class Model:
         return self.resolve_texture(self.textures[name])
 
     def load_texture(self, name):
-        return self.assets.load_texture_path(parse_texture_path(name))
+        return self.assets.load_texture(parse_texture_path(name))
 
     def __repr__(self):
         return "<Model name=%s>" % self.name
@@ -588,13 +589,11 @@ def parse_model_path(path):
         return "minecraft/models/" + path + ".json"
     return location[0] + "/models/" + location[1] + ".json"
 
-
 def parse_texture_path(path):
     location = path.split(":")
     if len(location) == 1:
         return "minecraft/textures/" + path + ".png"
     return location[0] + "/textures/" + location[1] + ".png"
-
 
 def parse_variant(condition):
     if condition == "":
