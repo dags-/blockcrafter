@@ -297,7 +297,8 @@ class EntityTextureSource:
         files.update(self.create_chest_files(source, "minecraft/textures/entity/chest/ender.png"))
         files.update(self.create_double_chest_files(source, "minecraft/textures/entity/chest/normal_double.png"))
         files.update(self.create_double_chest_files(source, "minecraft/textures/entity/chest/trapped_double.png"))
-        files.update(self.create_sign_files(source, "minecraft/textures/entity/sign.png"))
+        for path in source.glob_files("minecraft/textures/entity/signs/*.png"):
+            files.update(self.create_sign_files(source, path))
         for path in source.glob_files("minecraft/textures/entity/shulker/shulker*.png"):
             files.update(self.create_shulker_files(source, path))
         for path in source.glob_files("minecraft/textures/entity/bed/*.png"):
@@ -463,10 +464,12 @@ class Blockstate:
                 when = part["when"]
                 if len(when) == 1 and "OR" in when:
                     if any(map(lambda c: is_condition_fulfilled(c, variant), when["OR"])):
-                        modelrefs.append(part["apply"])
+                        if("apply" in part):
+                            modelrefs.append(part["apply"])
                 else:
                     if is_condition_fulfilled(when, variant):
-                        modelrefs.append(part["apply"])
+                        if("apply" in part):
+                            modelrefs.append(part["apply"])
         else:
             assert False, "There must be variants defined!"
 
